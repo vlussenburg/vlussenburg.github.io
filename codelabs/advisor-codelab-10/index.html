@@ -1,0 +1,130 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Alcide Advisor &#43; GitHub Actions</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid="0"
+                  id="advisor-codelab-10"
+                  title="Alcide Advisor &#43; GitHub Actions"
+                  environment="web"
+                  feedback-link="https://github.com/alcideio/pipeline">
+    
+      <google-codelab-step label="Welcome" duration="1">
+        <p>In this tutorial we will learn about <strong>Alcide Kubernetes Advisor</strong>, and how we can integrate it with GitHub Actions to implement continuous security and cluster hygiene for one or more Kubernetes clusters.</p>
+<p class="image-container"><img alt="Alcide Code-to-production security" style="width: 300.00px" src="img/c59ad84f35d9d39f.png"></p>
+<p>Alcide Advisor is an agentless Kubernetes audit, compliance and hygiene scanner that&#39;s built to ensure a friction free DevSecOps workflows. Alcide Advisor can be plugged in early in the development process and before moving to production.</p>
+<h3 is-upgraded>With Alcide Advisor, the security checks you can cover includes:</h3>
+<ul>
+<li>Kubernetes infrastructure vulnerability scanning.</li>
+<li>Hunting misplaced secrets, or excessive privileges for secret access.</li>
+<li>Workload hardening from Pod Security to network policies.</li>
+<li>Istio security configuration and best practices.</li>
+<li>Ingress Controllers for security best practices.</li>
+<li>Kubernetes API server access privileges.</li>
+<li>Kubernetes operators security best practices.</li>
+<li>Deployment conformance to labeling, annotating, resource limits and much more ...</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Prerequisites" duration="10">
+        <ul>
+<li>A repository on <a href="https://github.com/" target="_blank">GitHub</a></li>
+<li>Access from GitHub to your kubernetes cluster</li>
+</ul>
+<p class="image-container"><img alt="Alcide Code-to-production security" style="width: 800.00px" src="img/59db1bd85aca6cb1.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create a Scan Pipeline" duration="3">
+        <p>Alcide Kubernetes Advisor runs against a kubernetes cluster and requires access to kubeconfig to authenticate &amp; authorize itself to the cluster.</p>
+<p>If your GitHub Action can run kubectl commands against the cluster successfully - you should be ready to initiate a scan.</p>
+<p class="image-container"><img alt="Alcide Code-to-production security" style="width: 400.00px" src="img/ef0ea234328b5e20.svg"></p>
+<h2 is-upgraded>Your GitHub Actions workflow defition</h2>
+<pre><code>name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request 
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called &#34;build&#34;
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    - name: Write kube config from secret to file
+      env:
+        KUBE_CONFIG_DATA: $&#123;&#123; secrets.KUBE_CONFIG_DATA }}
+      run: |
+        echo &#34;${KUBE_CONFIG_DATA}&#34; | base64 --decode &gt; /tmp/config
+        echo &#34;::set-env name=KUBECONFIG::/tmp/config&#34;
+
+    - name: Scan Cluster
+    uses: alcideio/advisor-action@v1.1.0   
+    with:
+        exclude_namespaces: &#39;-&#39;
+        include_namespaces: &#39;*&#39;
+        output_file: &#39;advisor-scan.html&#39;
+
+    - name: Upload Alcide Advisor Scan Report
+    uses: actions/upload-artifact@v1
+    with:
+        name: advisor-scan.html
+        path: advisor-scan.html
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Review the scan report in your pipeline artifact" duration="0">
+        <p>The GitHub Action will publish the scan results to <strong>Artifacts</strong>. In the top right corner of a workflow run, once the run is over, there will be a Artifacts dropdown which you can download items from.</p>
+<p class="image-container"><img alt="GitHub Actions artifacts link" style="width: 200.00px" src="img/bf948a1dd3c8e5a7.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Summary" duration="1">
+        <p>In this codelab we added an automated scan of <em>k8s</em> cluster as an step in your <em>GitHub Actions</em> workflow.</p>
+<p class="image-container"><img alt="Alcide Code-to-production security" style="width: 400.00px" src="img/ef0ea234328b5e20.svg"></p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+
+</body>
+</html>
